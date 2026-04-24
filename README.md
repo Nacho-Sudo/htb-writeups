@@ -1,54 +1,80 @@
-# HTB Writeups — Juan Ignacio Ramiz Martinez
+🧠 HTB Writeups — Juan Ignacio Ramiz Martinez
+📊 Stats
+Category	Count
+Machines Completed	2
+Writeups Published	2
+Active Directory	1
+Linux Targets	1
+📌 About
 
-> Writeups técnicos de máquinas **retiradas** de Hack The Box.
-> Todas las actividades fueron realizadas en entornos legales y controlados.
+This repository contains technical writeups of retired Hack The Box machines, focused on:
 
----
+Real-world attack techniques
+Clear methodology
+Reproducible steps
+Professional documentation
 
-## Metodología
+All activities were performed in legal and controlled environments.
 
-Cada writeup sigue la misma estructura profesional:
+🧭 Methodology
 
-```
-1. Información de la máquina
-2. Reconocimiento      →  host discovery + port scanning
-3. Enumeración         →  servicios, shares, directorios
-4. Explotación         →  foothold con evidencia
-5. Post-Explotación    →  privilege escalation
-6. Resumen             →  attack path + flags
-```
+Each machine follows a structured offensive workflow:
 
----
+Machine Information
+Reconnaissance → Host discovery + Port scanning
+Enumeration → Services, shares, directories
+Exploitation → Initial foothold
+Post-Exploitation → Privilege escalation
+Summary → Attack path + flags
+🖥️ Machines
+🟢 Easy
+#	Machine	OS	Category	Techniques	Link
+01	Support	
+	Active Directory	SMB enum · .NET reversing · XOR decrypt · LDAP · RBCD	📄 View Writeup
+🟡 Medium
+#	Machine	OS	Category	Techniques	Link
+02	AirTouch	
+	WiFi / Network / Web	SNMP · WPA · Aircrack-ng · Web exploit · Evil Twin	📄 View Writeup
+🔴 Hard
 
-## Máquinas
+Coming soon...
 
-### 🟢 Easy
+🧪 Techniques Covered
+🔐 Active Directory
+SMB Null Session
+LDAP Enumeration
+BloodHound Analysis
+Resource-Based Constrained Delegation (RBCD)
+Evil-WinRM
+🌐 Web & Network
+SNMP Enumeration
+WPA Handshake Capture
+Aircrack-ng
+File Upload Bypass
+Reverse Shells
+Credential Harvesting
+🧬 Binary Analysis
+.NET Reversing
+XOR Password Decryption
+⚙️ Tools Used
 
-| # | Máquina | OS | Categoría | Técnicas principales | Link |
-|---|---------|-----|-----------|----------------------|------|
-| 01 | **Support** | Windows Server 2022 | Active Directory | SMB enum · .NET reversing · XOR decrypt · RBCD attack | [📄 Writeup](./support/) |
+nmap · smbclient · netexec · impacket
+evil-winrm · bloodhound · ldapsearch
+aircrack-ng · airmon-ng · hashcat
+burp suite · gobuster · wfuzz
+python · bash
 
-### 🟡 Medium
-> *Próximamente*
+📁 Repository Structure
 
-### 🔴 Hard
-> *Próximamente*
+htb-writeups/
+├── support/
+│ └── index.html
+├── AirTouch/
+│ └── AirTouch.html
+└── README.md
 
----
+⚠️ Disclaimer
 
-## Técnicas Cubiertas
+These writeups only cover retired Hack The Box machines.
 
-```
-SMB Null Session           →  Support
-.NET Binary Analysis       →  Support
-XOR Password Decryption    →  Support
-LDAP Enumeration           →  Support
-Evil-WinRM                 →  Support
-Resource-Based Constrained Delegation (RBCD)  →  Support
-BloodHound AD Enumeration  →  Support
-```
-
----
-
-> ⚠️ Estos writeups solo cubren máquinas **retiradas** de HTB.
-> Publicar writeups de máquinas activas viola los términos de servicio.
+Publishing solutions for active machines is a violation of HTB Terms of Service.
