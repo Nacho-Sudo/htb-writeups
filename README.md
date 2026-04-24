@@ -1,4 +1,5 @@
 🧠 HTB Writeups — Juan Ignacio Ramiz Martinez
+<p align="center"> <b>Offensive Security · Active Directory · Web Exploitation</b><br> Technical writeups of <b>retired Hack The Box machines</b> </p> <p align="center"> <img src="https://img.shields.io/badge/HTB-Writeups-red?style=for-the-badge&logo=hackthebox"> <img src="https://img.shields.io/badge/Focus-Offensive%20Security-black?style=for-the-badge"> <img src="https://img.shields.io/badge/Status-Active-green?style=for-the-badge"> </p>
 📊 Stats
 Category	Count
 Machines Completed	2
@@ -7,34 +8,32 @@ Active Directory	1
 Linux Targets	1
 📌 About
 
-This repository contains technical writeups of retired Hack The Box machines, focused on:
+This repository contains technical writeups of retired Hack The Box machines.
 
-Real-world attack techniques
-Clear methodology
-Reproducible steps
-Professional documentation
+✔ Real-world attack techniques
+✔ Clear methodology
+✔ Reproducible steps
+✔ Professional documentation
 
 All activities were performed in legal and controlled environments.
 
 🧭 Methodology
 
-Each machine follows a structured offensive workflow:
+Each machine follows a structured workflow:
 
-Machine Information
-Reconnaissance → Host discovery + Port scanning
-Enumeration → Services, shares, directories
-Exploitation → Initial foothold
-Post-Exploitation → Privilege escalation
-Summary → Attack path + flags
+1. Machine Information
+2. Reconnaissance      → Host discovery + Port scanning
+3. Enumeration         → Services, shares, directories
+4. Exploitation        → Initial foothold
+5. Post-Exploitation   → Privilege escalation
+6. Summary             → Attack path + flags
 🖥️ Machines
 🟢 Easy
 #	Machine	OS	Category	Techniques	Link
-01	Support	
-	Active Directory	SMB enum · .NET reversing · XOR decrypt · LDAP · RBCD	📄 View Writeup
+01	Support	Windows	Active Directory	SMB · .NET · XOR · LDAP · RBCD	📄 View
 🟡 Medium
 #	Machine	OS	Category	Techniques	Link
-02	AirTouch	
-	WiFi / Network / Web	SNMP · WPA · Aircrack-ng · Web exploit · Evil Twin	📄 View Writeup
+02	AirTouch	Linux	WiFi / Network / Web	SNMP · WPA · Aircrack-ng · Web · Evil Twin	📄 View
 🔴 Hard
 
 Coming soon...
@@ -44,7 +43,7 @@ Coming soon...
 SMB Null Session
 LDAP Enumeration
 BloodHound Analysis
-Resource-Based Constrained Delegation (RBCD)
+RBCD Attack
 Evil-WinRM
 🌐 Web & Network
 SNMP Enumeration
@@ -56,25 +55,24 @@ Credential Harvesting
 🧬 Binary Analysis
 .NET Reversing
 XOR Password Decryption
-⚙️ Tools Used
-
+⚙️ Tools
 nmap · smbclient · netexec · impacket
 evil-winrm · bloodhound · ldapsearch
-aircrack-ng · airmon-ng · hashcat
-burp suite · gobuster · wfuzz
-python · bash
-
-📁 Repository Structure
-
+aircrack-ng · hashcat · burp suite
+gobuster · wfuzz · python · bash
+📁 Structure
 htb-writeups/
 ├── support/
-│ └── index.html
+│   └── index.html
 ├── AirTouch/
-│ └── AirTouch.html
+│   └── AirTouch.html
 └── README.md
-
 ⚠️ Disclaimer
 
 These writeups only cover retired Hack The Box machines.
 
-Publishing solutions for active machines is a violation of HTB Terms of Service.
+Publishing active machine solutions violates HTB Terms of Service.
+
+📬 Contact
+<p align="center"> <a href="mailto:juanignacioramizmartinez@gmail.com"> <img src="https://img.shields.io/badge/Email-Contact-red?style=for-the-badge&logo=gmail"> </a> <a href="https://github.com/Nacho-Sudo"> <img src="https://img.shields.io/badge/GitHub-Nacho--Sudo-black?style=for-the-badge&logo=github"> </a> <a href="https://app.hackthebox.com/users/2705371"> <img src="https://img.shields.io/badge/HackTheBox-Profile-green?style=for-the-badge&logo=hackthebox"> </a> </p>
+<p align="center"> <b>“Break systems. Understand them. Secure them.”</b> </p>
