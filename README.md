@@ -29,45 +29,28 @@ Each machine follows a structured workflow:
 6. Summary             → Attack path + flags
 🖥️ Machines
 🟢 Easy
-#	Machine	OS	Category	Techniques	Link
-01	Support	Windows	Active Directory	SMB · .NET · XOR · LDAP · RBCD	📄 View
-🟡 Medium
-#	Machine	OS	Category	Techniques	Link
-02	AirTouch	Linux	WiFi / Network / Web	SNMP · WPA · Aircrack-ng · Web · Evil Twin	📄 View
-🔴 Hard
+
+## 🖥️ Machines
+
+### 🟢 Easy
+
+| #  | Machine     | OS      | Category         | Techniques                     | Link                                                       |
+| -- | ----------- | ------- | ---------------- | ------------------------------ | ---------------------------------------------------------- |
+| 01 | **Support** | Windows | Active Directory | SMB · .NET · XOR · LDAP · RBCD | [View](https://nacho-sudo.github.io/htb-writeups/support/) |
+
+---
+
+### 🟡 Medium
+
+| #  | Machine      | OS    | Category             | Techniques                                 | Link                                                                     |
+| -- | ------------ | ----- | -------------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
+| 02 | **AirTouch** | Linux | WiFi / Network / Web | SNMP · WPA · Aircrack-ng · Web · Evil Twin | [View](https://nacho-sudo.github.io/htb-writeups/AirTouch/AirTouch.html) |
+
+---
+
+### 🔴 Hard
 
 Coming soon...
-
-🧪 Techniques Covered
-🔐 Active Directory
-SMB Null Session
-LDAP Enumeration
-BloodHound Analysis
-RBCD Attack
-Evil-WinRM
-🌐 Web & Network
-SNMP Enumeration
-WPA Handshake Capture
-Aircrack-ng
-File Upload Bypass
-Reverse Shells
-Credential Harvesting
-🧬 Binary Analysis
-.NET Reversing
-XOR Password Decryption
-⚙️ Tools
-nmap · smbclient · netexec · impacket
-evil-winrm · bloodhound · ldapsearch
-aircrack-ng · hashcat · burp suite
-gobuster · wfuzz · python · bash
-📁 Structure
-htb-writeups/
-├── support/
-│   └── index.html
-├── AirTouch/
-│   └── AirTouch.html
-└── README.md
-⚠️ Disclaimer
 
 These writeups only cover retired Hack The Box machines.
 
